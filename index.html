@@ -11,7 +11,7 @@
 
   <script type="module">
     //参考：　https://github.com/LintangWisesa/MediaPipe-in-JavaScript
-    const videoElement = document.getElementsByClassName('input_video')[0];
+    let videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementsByClassName('output_canvas')[0];
     const img = document.getElementById("kagayaki"); 
     const canvasCtx = canvasElement.getContext('2d');
@@ -24,11 +24,11 @@
     var prev=0;
     var angle=0;
     var prevAngle=0;
-    function onResults(results) {
+    function onResultsSegmentation(results) {
       let width=results.image.width;
       let height=results.image.height;
-      //画像のサイズとcanvasのサイズが異なる場合はサイズを調整
       if(window.innerWidth!=canvasElement.width){
+        console.log("hogehoge");
         //入力画像と同じサイズのcanvas(描画領域)を用意
         canvasElement.width=window.innerWidth;
         canvasElement.height=height*window.innerWidth/width;
@@ -97,7 +97,7 @@
       modelSelection: 0,
     });
     
-    selfieSegmentation.onResults(onResults);
+    selfieSegmentation.onResults(onResultsSegmentation);
     
   
     const faceDetection = new FaceDetection({locateFile: (file) => {
@@ -120,6 +120,7 @@
     });
     camera.start();
 </script>
+  
   
   
 </head>
