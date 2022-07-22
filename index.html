@@ -9,10 +9,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/face_detection.js" crossorigin="anonymous"></script>
 
 
-  <script type="module">
+ <script type="module">
     //参考：　https://github.com/LintangWisesa/MediaPipe-in-JavaScript
     let videoElement = document.getElementById('input_video');
-    const canvasElement = document.getElementsByClassName('output_canvas')[0];
+    let canvasElement = document.getElementById('output_canvas');
     const img = document.getElementById("kagayaki"); 
     const canvasCtx = canvasElement.getContext('2d');
     var px=0;
@@ -123,13 +123,14 @@
   
   
   
+  
 </head>
 
 <body>
   <div class="container">
     <video class="input_video" autoplay playsinline style="display:none; position:absolute;"></video>
     <img id="kagayaki" src="./myakumyaku.png" style="display:none; position:absolute;">
-    <canvas class="output_canvas" width="1280px" height="720px" style="position:absolute;"></canvas>
+   <canvas id="output_canvas" style="position:absolute;"></canvas>
   </div>
 </body>
 </html>
