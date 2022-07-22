@@ -28,12 +28,11 @@
       let width=results.image.width;
       let height=results.image.height;
       //画像のサイズとcanvasのサイズが異なる場合はサイズを調整
-      if(width!=canvasElement.width){
+      if(window.innerWidth!=canvasElement.width){
         //入力画像と同じサイズのcanvas(描画領域)を用意
-        canvasElement.width=width;
-        canvasElement.height=height;
+        canvasElement.width=window.innerWidth;
+        canvasElement.height=height*window.innerWidth/width;
       }
-    
       
       canvasCtx.save();
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
