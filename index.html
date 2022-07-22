@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/face_detection.js" crossorigin="anonymous"></script>
+
+
+  <script type="module">
+    //参考：　https://github.com/LintangWisesa/MediaPipe-in-JavaScript
+    const videoElement = document.getElementsByClassName('input_video')[0];
+    const canvasElement = document.getElementsByClassName('output_canvas')[0];
+    const img = document.getElementById("kagayaki"); 
+    const canvasCtx = canvasElement.getContext('2d');
+    var px=0;
+    var py=0;
+    var w=0;
+    var h=0;
+    var detected=false;
+    var count=0;
+    var prev=0;
+    var angle=0;
+    var prevAngle=0;
+    function onResults(results) {
+      let width=results.image.width;
+      let height=results.image.height;
+      //画像のサイズとcanvasのサイズが異なる場合はサイズを調整
+      if(width!=canvasElement.width){
+        //入力画像と同じサイズのcanvas(描画領域)を用意
+        canvasElement.width=width;
+        canvasElement.height=height;
+      }
+    
+      
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.segmentationMask, 0, 0,canvasElement.width, canvasElement.height);
+      
+      // Only overwrite existing pixels.
+      canvasCtx.globalCompositeOperation = 'source-in';
+      canvasCtx.fillStyle = '#4472C4';
+      canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+      // Only overwrite missing pixels.
+      canvasCtx.globalCompositeOperation = 'destination-atop';
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+           
+      canvasCtx.restore();
+      
+      if(detected && count>100){
+        canvasCtx.save();
+        //位置指定
+        canvasCtx.translate(px, py);
+        angle=0.3*angle+0.7*prevAngle;
+        //角度指定
+        canvasCtx.rotate(angle);
+        let mul = 2.5*w/img.width;
+        mul=0.3*mul+0.7*prev;
+        canvasCtx.scale(mul, mul);
+        canvasCtx.drawImage(img,  -img.width/2.0, -img.height/1.6, img.width, img.height); 
+        canvasCtx.restore();
+        prev=mul;
+        prevAngle=angle;
+      }
+      count++;
+    }
+    
+    function onResultsFace(results) {
+      
+      if (results.detections.length > 0) {
+        w=results.detections[0].boundingBox.width*canvasElement.width;
+        h=results.detections[0].boundingBox.height*canvasElement.height;
+        px=results.detections[0].boundingBox.xCenter*canvasElement.width;
+        py=results.detections[0].boundingBox.yCenter*canvasElement.height;
+        
+        var p1=results.detections[0].landmarks[4];
+        var p2=results.detections[0].landmarks[5];
+        angle=Math.atan2((p2.y-p1.y)*results.image.height,(p2.x-p1.x)*results.image.width);
+
+        //console.log(angle*180.0/Math.PI);
+        
+        detected=true;
+       //console.log(results.detections[0].boundingBox.rotation);
+      }else{
+        detected=false;
+      }
+    }
+    
+    const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+    }});
+    
+    selfieSegmentation.setOptions({
+      selfieMode: true,
+      modelSelection: 0,
+    });
+    
+    selfieSegmentation.onResults(onResults);
+    
+  
+    const faceDetection = new FaceDetection({locateFile: (file) => {
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
+    }});
+    faceDetection.setOptions({
+      selfieMode: true,
+      modelSelection: 0,
+      minDetectionConfidence: 0.5
+    });
+    faceDetection.onResults(onResultsFace);
+    
+    const camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await selfieSegmentation.send({image: videoElement});
+        await faceDetection.send({image: videoElement});
+      },
+      width: 640,
+      height: 360
+    });
+    camera.start();
+</script>
+  
+  
+</head>
+
+<body>
+  <div class="container">
+    <video class="input_video" autoplay playsinline style="display:none; position:absolute;"></video>
+    <img id="kagayaki" src="./myakumyaku.png" style="display:none; position:absolute;">
+    <canvas class="output_canvas" width="1280px" height="720px" style="position:absolute;"></canvas>
+  </div>
+</body>
+</html>
