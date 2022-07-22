@@ -24,86 +24,86 @@
     let angle=0;
     let prevAngle=0;
     
-     window.onload = function() {
-      //videoElement = document.getElementById('input_video');
-       canvasElement = document.getElementById('output_canvas');
-       img = document.getElementById("kagayaki"); 
-       canvasCtx = canvasElement.getContext('2d');
-       // //SelfieSegmentationの初期化
-       // const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
-       //   return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-       // }});
-       // selfieSegmentation.setOptions({
-       //   selfieMode: true,
-       //   modelSelection: 0,
-       // });
-       // selfieSegmentation.onResults(onResultsSegmentation);
+    //  window.onload = function() {
+    //   //videoElement = document.getElementById('input_video');
+    //    canvasElement = document.getElementById('output_canvas');
+    //    img = document.getElementById("kagayaki"); 
+    //    canvasCtx = canvasElement.getContext('2d');
+    //    // //SelfieSegmentationの初期化
+    //    // const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+    //    //   return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+    //    // }});
+    //    // selfieSegmentation.setOptions({
+    //    //   selfieMode: true,
+    //    //   modelSelection: 0,
+    //    // });
+    //    // selfieSegmentation.onResults(onResultsSegmentation);
        
-       // //顔認識の初期化
-       // const faceDetection = new FaceDetection({locateFile: (file) => {
-       //   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
-       // }});
-       // faceDetection.setOptions({
-       //   selfieMode: true,
-       //   modelSelection: 0,
-       //   minDetectionConfidence: 0.5
-       // });
-       // faceDetection.onResults(onResultsFace);
+    //    // //顔認識の初期化
+    //    // const faceDetection = new FaceDetection({locateFile: (file) => {
+    //    //   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
+    //    // }});
+    //    // faceDetection.setOptions({
+    //    //   selfieMode: true,
+    //    //   modelSelection: 0,
+    //    //   minDetectionConfidence: 0.5
+    //    // });
+    //    // faceDetection.onResults(onResultsFace);
        
-       // const camera = new Camera(videoElement, {
-       //   onFrame: async () => {
-       //    // await faceDetection.send({image: videoElement});
-       //    // await selfieSegmentation.send({image: videoElement});
-       //   },
-       //   width: 640,
-       //   height: 360
-       // });
-       // camera.start();
-     }  
+    //    // const camera = new Camera(videoElement, {
+    //    //   onFrame: async () => {
+    //    //    // await faceDetection.send({image: videoElement});
+    //    //    // await selfieSegmentation.send({image: videoElement});
+    //    //   },
+    //    //   width: 640,
+    //    //   height: 360
+    //    // });
+    //    // camera.start();
+    //  }  
 
-    function onResultsSegmentation(results) {
-      let width=results.image.width;
-      let height=results.image.height;
-      if(window.innerWidth!=canvasElement.width){
-        //画面と同じ横幅のcanvas(描画領域)を用意
-        canvasElement.width=window.innerWidth;
-        canvasElement.height=height*window.innerWidth/width;
-      }
+    // function onResultsSegmentation(results) {
+    //   let width=results.image.width;
+    //   let height=results.image.height;
+    //   if(window.innerWidth!=canvasElement.width){
+    //     //画面と同じ横幅のcanvas(描画領域)を用意
+    //     canvasElement.width=window.innerWidth;
+    //     canvasElement.height=height*window.innerWidth/width;
+    //   }
       
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      canvasCtx.drawImage(results.segmentationMask, 0, 0,canvasElement.width, canvasElement.height);
+    //   canvasCtx.save();
+    //   canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    //   canvasCtx.drawImage(results.segmentationMask, 0, 0,canvasElement.width, canvasElement.height);
       
-      // Only overwrite existing pixels.
-      canvasCtx.globalCompositeOperation = 'source-in';
-      canvasCtx.fillStyle = '#4472C4';
-      canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    //   // Only overwrite existing pixels.
+    //   canvasCtx.globalCompositeOperation = 'source-in';
+    //   canvasCtx.fillStyle = '#4472C4';
+    //   canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 
-      // Only overwrite missing pixels.
-      canvasCtx.globalCompositeOperation = 'destination-atop';
-      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+    //   // Only overwrite missing pixels.
+    //   canvasCtx.globalCompositeOperation = 'destination-atop';
+    //   canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
            
-      canvasCtx.restore();
+    //   canvasCtx.restore();
       
-      if(faceDetected && count>100){
-        canvasCtx.save();
-        //位置指定
-        canvasCtx.translate(faceX, faceY);
-        angle=0.3*angle+0.7*prevAngle;
-        //角度指定
-        canvasCtx.rotate(angle);
-        //サイズ計算
+    //   if(faceDetected && count>100){
+    //     canvasCtx.save();
+    //     //位置指定
+    //     canvasCtx.translate(faceX, faceY);
+    //     angle=0.3*angle+0.7*prevAngle;
+    //     //角度指定
+    //     canvasCtx.rotate(angle);
+    //     //サイズ計算
         
-        let mul = 2.5*faceHeight/img.height;
-        mul=0.3*mul+0.7*prevScale;
-        canvasCtx.scale(mul, mul);
-        canvasCtx.drawImage(img,  -img.width/2.0, -img.height/1.6, img.width, img.height); 
-        canvasCtx.restore();
-        prevScale=mul;
-        prevAngle=angle;
-      }
-      count++;
-    }
+    //     let mul = 2.5*faceHeight/img.height;
+    //     mul=0.3*mul+0.7*prevScale;
+    //     canvasCtx.scale(mul, mul);
+    //     canvasCtx.drawImage(img,  -img.width/2.0, -img.height/1.6, img.width, img.height); 
+    //     canvasCtx.restore();
+    //     prevScale=mul;
+    //     prevAngle=angle;
+    //   }
+    //   count++;
+    // }
     
     function onResultsFace(results) {
       
