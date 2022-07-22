@@ -24,6 +24,43 @@
     let angle=0;
     let prevAngle=0;
     
+     window.onload = function() {
+       //videoElement = document.getElementById('input_video');
+       canvasElement = document.getElementById('output_canvas');
+       img = document.getElementById("kagayaki"); 
+       canvasCtx = canvasElement.getContext('2d');
+       // //SelfieSegmentationの初期化
+       // const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+       //   return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+       // }});
+       // selfieSegmentation.setOptions({
+       //   selfieMode: true,
+       //   modelSelection: 0,
+       // });
+       // selfieSegmentation.onResults(onResultsSegmentation);
+       
+       // //顔認識の初期化
+       // const faceDetection = new FaceDetection({locateFile: (file) => {
+       //   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
+       // }});
+       // faceDetection.setOptions({
+       //   selfieMode: true,
+       //   modelSelection: 0,
+       //   minDetectionConfidence: 0.5
+       // });
+       // faceDetection.onResults(onResultsFace);
+       
+       const camera = new Camera(videoElement, {
+         onFrame: async () => {
+          // await faceDetection.send({image: videoElement});
+          // await selfieSegmentation.send({image: videoElement});
+         },
+         width: 640,
+         height: 360
+       });
+       camera.start();
+     }  
+
     function onResultsSegmentation(results) {
       let width=results.image.width;
       let height=results.image.height;
@@ -86,42 +123,7 @@
       }
     }
     
-     window.onload = function() {
-       //videoElement = document.getElementById('input_video');
-       canvasElement = document.getElementById('output_canvas');
-       img = document.getElementById("kagayaki"); 
-       canvasCtx = canvasElement.getContext('2d');
-       // //SelfieSegmentationの初期化
-       // const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
-       //   return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-       // }});
-       // selfieSegmentation.setOptions({
-       //   selfieMode: true,
-       //   modelSelection: 0,
-       // });
-       // selfieSegmentation.onResults(onResultsSegmentation);
-       
-       // //顔認識の初期化
-       // const faceDetection = new FaceDetection({locateFile: (file) => {
-       //   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
-       // }});
-       // faceDetection.setOptions({
-       //   selfieMode: true,
-       //   modelSelection: 0,
-       //   minDetectionConfidence: 0.5
-       // });
-       // faceDetection.onResults(onResultsFace);
-       
-       const camera = new Camera(videoElement, {
-         onFrame: async () => {
-           await faceDetection.send({image: videoElement});
-           await selfieSegmentation.send({image: videoElement});
-         },
-         width: 640,
-         height: 360
-       });
-       camera.start();
-     }  
+
 </script>
   
 </head>
