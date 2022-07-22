@@ -8,28 +8,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/face_detection.js" crossorigin="anonymous"></script>
 
-
- <script type="module">
+ <script type="text/javascript">
     //参考：　https://github.com/LintangWisesa/MediaPipe-in-JavaScript
-    let videoElement = document.getElementById('input_video');
-    let canvasElement = document.getElementById('output_canvas');
-    let img = document.getElementById("kagayaki"); 
-    let canvasCtx = canvasElement.getContext('2d');
-    let px=0;
-    let py=0;
+    let videoElement;
+    let canvasElement;
+    let img; 
+    let canvasCtx;
+    let faceX=0;
+    let faceY=0;
     let faceWidth=0;
     let faceHeight=0;
-    let detected=false;
+    let faceDetected=false;
     let count=0;
-    let prev=0;
+    let prevScale=0;
     let angle=0;
     let prevAngle=0;
+    
     function onResultsSegmentation(results) {
       let width=results.image.width;
       let height=results.image.height;
       if(window.innerWidth!=canvasElement.width){
-        console.log("hogehoge");
-        //入力画像と同じサイズのcanvas(描画領域)を用意
+        //画面と同じ横幅のcanvas(描画領域)を用意
         canvasElement.width=window.innerWidth;
         canvasElement.height=height*window.innerWidth/width;
       }
@@ -49,19 +48,21 @@
            
       canvasCtx.restore();
       
-      if(detected && count>100){
+      if(faceDetected && count>100){
         canvasCtx.save();
         //位置指定
-        canvasCtx.translate(px, py);
+        canvasCtx.translate(faceX, faceY);
         angle=0.3*angle+0.7*prevAngle;
         //角度指定
         canvasCtx.rotate(angle);
-        let mul = 2.5*faceWidth/img.width;
-        mul=0.3*mul+0.7*prev;
+        //サイズ計算
+        
+        let mul = 2.5*faceHeight/img.height;
+        mul=0.3*mul+0.7*prevScale;
         canvasCtx.scale(mul, mul);
         canvasCtx.drawImage(img,  -img.width/2.0, -img.height/1.6, img.width, img.height); 
         canvasCtx.restore();
-        prev=mul;
+        prevScale=mul;
         prevAngle=angle;
       }
       count++;
@@ -72,55 +73,56 @@
       if (results.detections.length > 0) {
         faceWidth=results.detections[0].boundingBox.width*canvasElement.width;
         faceHeight=results.detections[0].boundingBox.height*canvasElement.height;
-        px=results.detections[0].boundingBox.xCenter*canvasElement.width;
-        py=results.detections[0].boundingBox.yCenter*canvasElement.height;
+        faceX=results.detections[0].boundingBox.xCenter*canvasElement.width;
+        faceY=results.detections[0].boundingBox.yCenter*canvasElement.height;
         
         var p1=results.detections[0].landmarks[4];
         var p2=results.detections[0].landmarks[5];
-        angle=Math.atan2((p2.y-p1.y)*results.image.height,(p2.x-p1.x)*results.image.width);
-
-        //console.log(angle*180.0/Math.PI);
-        
-        detected=true;
+        angle=Math.atan2((p2.y-p1.y)*results.image.height,(p2.x-p1.x)*results.image.width);        
+        faceDetected=true;
        //console.log(results.detections[0].boundingBox.rotation);
       }else{
-        detected=false;
+        faceDetected=false;
       }
     }
     
-    const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-    }});
-    
-    selfieSegmentation.setOptions({
-      selfieMode: true,
-      modelSelection: 0,
-    });
-    
-    selfieSegmentation.onResults(onResultsSegmentation);
-    
-  
-    const faceDetection = new FaceDetection({locateFile: (file) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
-    }});
-    faceDetection.setOptions({
-      selfieMode: true,
-      modelSelection: 0,
-      minDetectionConfidence: 0.5
-    });
-    faceDetection.onResults(onResultsFace);
-    
-    const camera = new Camera(videoElement, {
-      onFrame: async () => {
-        await selfieSegmentation.send({image: videoElement});
-        await faceDetection.send({image: videoElement});
-      },
-      width: 640,
-      height: 360
-    });
-    camera.start();
+     window.onload = function() {
+       videoElement = document.getElementById('input_video');
+       canvasElement = document.getElementById('output_canvas');
+       img = document.getElementById("kagayaki"); 
+       canvasCtx = canvasElement.getContext('2d');
+       //SelfieSegmentationの初期化
+       const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+         return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+       }});
+       selfieSegmentation.setOptions({
+         selfieMode: true,
+         modelSelection: 0,
+       });
+       selfieSegmentation.onResults(onResultsSegmentation);
+       
+       //顔認識の初期化
+       const faceDetection = new FaceDetection({locateFile: (file) => {
+         return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
+       }});
+       faceDetection.setOptions({
+         selfieMode: true,
+         modelSelection: 0,
+         minDetectionConfidence: 0.5
+       });
+       faceDetection.onResults(onResultsFace);
+       
+       const camera = new Camera(videoElement, {
+         onFrame: async () => {
+           await faceDetection.send({image: videoElement});
+           await selfieSegmentation.send({image: videoElement});
+         },
+         width: 640,
+         height: 360
+       });
+       camera.start();
+     }  
 </script>
-  
   
 </head>
 
