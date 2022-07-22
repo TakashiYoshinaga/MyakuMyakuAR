@@ -29,14 +29,14 @@
       let width=results.image.width;
       let height=results.image.height;
       if(window.innerWidth!=canvasElement.width){
-        if(window.innerWidth<window.innerHeight){        
+        //if(window.innerWidth<window.innerHeight){        
           //画面と同じ横幅のcanvas(描画領域)を用意
           canvasElement.width=window.innerWidth;
           canvasElement.height=height*window.innerWidth/width;
-        }else{
-          canvasElement.width=width*window.innerHeight/height;
-          canvasElement.height=window.innerHeight;
-        }
+        // }else{
+        //   canvasElement.width = width*window.innerHeight/height;
+        //   canvasElement.height = window.innerHeight;
+        // }
       }
       
       canvasCtx.save();
