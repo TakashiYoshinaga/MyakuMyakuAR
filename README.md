@@ -1,6 +1,6 @@
 # MyakuMyakuAR
 
-Try it on web browser of your device. (Camera access permission is required.)<br>
+Try it on a web browser of your device. (Camera access permission is required.)<br>
 https://takashiyoshinaga.github.io/MyakuMyakuAR/
 
 Demo Video<br>
