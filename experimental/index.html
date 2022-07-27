@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/face_detection.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <script type="text/javascript">
+      //参考：　https://github.com/LintangWisesa/MediaPipe-in-JavaScript
+      let videoElement;
+      let canvasElement;
+      let img;
+      let back;
+      let canvasCtx;
+      let faceX = 0;
+      let faceY = 0;
+      let faceWidth = 0;
+      let faceHeight = 0;
+      let faceDetected = false;
+      let count = 0;
+      let prevScale = 0;
+      let angle = 0;
+      let prevAngle = 0;
+      let checkbox;
+      let isVirtualBackground = false;
+
+      function onResultsSegmentation(results) {
+        let width = results.image.width;
+        let height = results.image.height;
+        // if(window.innerWidth!=canvasElement.width){
+        //     //画面と同じ横幅のcanvas(描画領域)を用意
+        //     canvasElement.width=window.innerWidth;
+        //     canvasElement.height=height*window.innerWidth/width;
+        // }
+        if (width != canvasElement.width) {
+          //入力画像と同じサイズのcanvas(描画領域)を用意
+          canvasElement.width = width;
+          canvasElement.height = height;
+        }
+
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(
+          results.segmentationMask,
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height
+        );
+
+        // Only overwrite existing pixels.
+        canvasCtx.globalCompositeOperation = "source-in";
+        canvasCtx.fillStyle = "#4472C4";
+        canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+        // Only overwrite missing pixels.
+        canvasCtx.globalCompositeOperation = "destination-atop";
+        //canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        if (!isVirtualBackground) {
+          canvasCtx.drawImage(
+            results.image,
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height
+          );
+        } else {
+          canvasCtx.drawImage(
+            back,
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height
+          );
+        }
+        canvasCtx.restore();
+
+        if (faceDetected && count > 100) {
+          canvasCtx.save();
+          //位置指定
+          canvasCtx.translate(faceX, faceY);
+          angle = 0.3 * angle + 0.7 * prevAngle;
+          //角度指定
+          canvasCtx.rotate(angle);
+          //サイズ計算
+
+          let mul = (2.5 * faceHeight) / img.height;
+          mul = 0.3 * mul + 0.7 * prevScale;
+          canvasCtx.scale(mul, mul);
+          canvasCtx.drawImage(
+            img,
+            -img.width / 2.0,
+            -img.height / 1.6,
+            img.width,
+            img.height
+          );
+          canvasCtx.restore();
+          prevScale = mul;
+          prevAngle = angle;
+        }
+        count++;
+      }
+
+      function onResultsFace(results) {
+        if (results.detections.length > 0) {
+          faceWidth =
+            results.detections[0].boundingBox.width * canvasElement.width;
+          faceHeight =
+            results.detections[0].boundingBox.height * canvasElement.height;
+          faceX =
+            results.detections[0].boundingBox.xCenter * canvasElement.width;
+          faceY =
+            results.detections[0].boundingBox.yCenter * canvasElement.height;
+
+          var p1 = results.detections[0].landmarks[4];
+          var p2 = results.detections[0].landmarks[5];
+          angle = Math.atan2(
+            (p2.y - p1.y) * results.image.height,
+            (p2.x - p1.x) * results.image.width
+          );
+          faceDetected = true;
+          //console.log(results.detections[0].boundingBox.rotation);
+        } else {
+          faceDetected = false;
+        }
+      }
+
+      function valueChange() {
+        if (checkbox.checked) {
+          isVirtualBackground = true;
+        } else {
+          isVirtualBackground = false;
+        }
+      }
+
+      window.onload = function () {
+        videoElement = document.getElementById("input_video");
+        canvasElement = document.getElementById("output_canvas");
+        img = document.getElementById("kagayaki");
+        back = document.getElementById("back");
+        canvasCtx = canvasElement.getContext("2d");
+        checkbox = document.getElementById("check");
+        checkbox.addEventListener("change", valueChange);
+
+        //SelfieSegmentationの初期化
+        const selfieSegmentation = new SelfieSegmentation({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+          },
+        });
+
+        selfieSegmentation.setOptions({
+          selfieMode: true,
+          modelSelection: 0,
+        });
+        selfieSegmentation.onResults(onResultsSegmentation);
+
+        //顔認識の初期化
+        const faceDetection = new FaceDetection({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
+          },
+        });
+        faceDetection.setOptions({
+          selfieMode: true,
+          modelSelection: 0,
+          minDetectionConfidence: 0.5,
+        });
+        faceDetection.onResults(onResultsFace);
+
+        const camera = new Camera(videoElement, {
+          onFrame: async () => {
+            await faceDetection.send({ image: videoElement });
+            await selfieSegmentation.send({ image: videoElement });
+          },
+          width: 640,
+          height: 360,
+        });
+        camera.start();
+      };
+    </script>
+  </head>
+
+  <body>
+    <video
+      id="input_video"
+      autoplay
+      playsinline
+      style="display: none; position: absolute"
+    ></video>
+    <img
+      id="kagayaki"
+      src="https://cdn.glitch.global/55cad568-79e4-40c8-ae5d-e48b08b7f0f6/kagayaki.png?v=1658306913715"
+      style="display: none; position: absolute"
+    />
+    <img
+      id="back"
+      src="https://cdn.glitch.global/8981842c-8d46-45e3-b01a-a4c570351933/6920629403_35f86411d3.jpg?v=1658350968767"
+      style="display: none; position: absolute"
+    />
+    <canvas id="output_canvas" style="position: absolute"></canvas>
+    <label style="position: absolute"
+      ><input id="check" type="checkbox" />Virtual Background</label
+    >
+  </body>
+</html>
+
